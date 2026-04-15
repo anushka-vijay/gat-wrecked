@@ -1,0 +1,5 @@
+[core]
+    remote = shared_drive
+['remote "shared_drive"']
+    url = gdrive://10tNS7B5j_q3OuHF6KQIkYik6hCmJ623Q
+    gdrive_use_service_account = true
