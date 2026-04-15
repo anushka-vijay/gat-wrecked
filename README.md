@@ -32,7 +32,7 @@ gatv2-replication/
 │   └── 04_varmisuse.ipynb           
 ├── src/                        # Shared logic (.py files)
 │   ├── __init__.py
-│   ├── models.py               # GAT and GATv2 PyTorch modules
+│   ├── models.py               # GAT and GATv2 modules
 │   ├── data_loaders.py         # PyG NeighborLoaders and custom AST parsing
 │   ├── train.py                # Standardized training loops
 │   └── utils.py                # Noise injection and W&B logging
