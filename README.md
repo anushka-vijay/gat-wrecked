@@ -55,8 +55,8 @@ from google.colab import drive
 drive.mount('/content/drive')
 
 # 2. Clone the code into Colab's fast local storage
-!git clone https://github.com/your-org/gatv2-replication.git
-%cd gatv2-replication
+!git clone https://github.com/anushka-vijay/gat-wrecked.git
+%cd gat-wrecked
 !pip install -r requirements.txt
 
 # 3. Enable auto-reloading for local module edits
