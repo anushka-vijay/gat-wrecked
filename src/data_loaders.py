@@ -138,19 +138,19 @@ def get_loader(name, path, batch_size=32, split='train', subset_size=1000, vocab
         # We return the loader AND the dataset so you can extract the vocab for the next split!
         return loader, dataset
 
-    elif name in ['ogbn-arxiv', 'ogbn-proteins']:
-        # Load from OGB Library
-        dataset = PygNodePropPredDataset(name=name, root=path)
-        data = dataset[0]
+    # elif name in ['ogbn-arxiv', 'ogbn-proteins']:
+    #     # Load from OGB Library
+    #     dataset = PygNodePropPredDataset(name=name, root=path)
+    #     data = dataset[0]
         
-        # Use NeighborLoader for giant OGB graphs
-        loader = NeighborLoader(
-            data,
-            num_neighbors=[15, 10], # Sample 2 hops
-            batch_size=batch_size,
-            input_nodes=data.train_mask if hasattr(data, 'train_mask') else None,
-            shuffle=True
-        )
-        return loader, dataset
+    #     # Use NeighborLoader for giant OGB graphs
+    #     loader = NeighborLoader(
+    #         data,
+    #         num_neighbors=[15, 10], # Sample 2 hops
+    #         batch_size=batch_size,
+    #         input_nodes=data.train_mask if hasattr(data, 'train_mask') else None,
+    #         shuffle=True
+    #     )
+    #     return loader, dataset
     else:
         raise ValueError(f"Unknown dataset: {name}")
