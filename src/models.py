@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class GATLayer(nn.Module):
     def __init__(self, in_features, out_features, dropout, alpha, concat=True, gain=1.414):
         super(GATLayer, self).__init__()
@@ -82,10 +81,80 @@ class GAT_Model(nn.Module):
             return out, attn_weights
         return out
 
+class GATv2Layer(nn.Module):
+    def __init__(self, in_features, out_features, dropout=0.2, alpha=0.2, concat=True):
+        super(GATv2Layer, self).__init__()
+        self.dropout = dropout
+        self.concat = concat
+        
+        # GATv2: W interacts with the concatenated hi and hj
+        self.W = nn.Linear(2 * in_features, out_features, bias=True)
+        # We need a separate linear layer for the features being aggregated
+        self.W_prop = nn.Linear(in_features, out_features, bias=False)
+        self.a = nn.Parameter(torch.empty(size=(out_features, 1)))
+        
+        nn.init.xavier_uniform_(self.W.weight, gain=1.414)
+        nn.init.xavier_uniform_(self.W_prop.weight, gain=1.414)
+        nn.init.xavier_uniform_(self.a.data, gain=1.414)
+        self.leakyrelu = nn.LeakyReLU(alpha)
+
+    def forward(self, h, adj):
+        N = h.size()[0]
+        h_i = h.repeat_interleave(N, dim=0)
+        h_j = h.repeat(N, 1)
+        
+        # Scoring: a^T * LeakyReLU(W * [hi || hj])
+        e = self.leakyrelu(self.W(torch.cat([h_i, h_j], dim=1)))
+        e = torch.matmul(e, self.a).squeeze(1).view(N, N)
+
+        # Masking and Softmax
+        zero_vec = -1e9 * torch.ones_like(e)
+        attention = torch.where(adj > 0, e, zero_vec)
+        attention = F.softmax(attention, dim=1)
+        attention = F.dropout(attention, self.dropout, training=self.training)
+
+        # Use the specific projection for the aggregated values
+        Wh = self.W_prop(h)
+        h_prime = torch.matmul(attention, Wh)
+        
+        return F.elu(h_prime) if self.concat else h_prime
+    
+class GATv2_Model(nn.Module):
+    def __init__(self, nfeat, nhid, nclass, dropout, alpha, nheads):
+        super(GATv2_Model, self).__init__()
+        self.dropout = dropout
+        # Multi-head attention implementation [cite: 140, 142, 143]
+        self.attentions = nn.ModuleList([
+            GATv2Layer(nfeat, nhid, dropout=dropout, alpha=alpha, concat=True) 
+            for _ in range(nheads)
+        ])
+        # Output layer [cite: 144, 145]
+        self.out_att = GATv2Layer(nhid * nheads, nclass, dropout=dropout, alpha=alpha, concat=False)
+
+    def forward(self, x, adj):
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = torch.cat([att(x, adj) for att in self.attentions], dim=1)
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = self.out_att(x, adj)
+        return F.log_softmax(x, dim=1)
+
+def build_model(model_type, nfeat, nhid, nclass,
+                dropout=0.6, alpha=0.2, nheads=8):
+    model_type = model_type.lower()
+    if model_type == "gat":
+        return GAT_Model(nfeat=nfeat, nhid=nhid, nclass=nclass,
+                         dropout=dropout, alpha=alpha, nheads=nheads)
+    elif model_type == "gatv2":
+        return GATv2_Model(nfeat=nfeat, nhid=nhid, nclass=nclass,
+                           dropout=dropout, alpha=alpha, nheads=nheads)
+    raise ValueError(f"Unknown model_type '{model_type}'. Supported: 'gat', 'gatv2'")
 # We can add gatv2 here after the implementation so its seperated out.
 def build_model(model_type, nfeat, nhid, nclass,
                 dropout=0.6, alpha=0.2, nheads=8):
     if model_type.lower() == "gat":
         return GAT_Model(nfeat=nfeat, nhid=nhid, nclass=nclass,
                          dropout=dropout, alpha=alpha, nheads=nheads)
+    elif model_type == "gatv2":
+        return GATv2_Model(nfeat=nfeat, nhid=nhid, nclass=nclass,
+                           dropout=dropout, alpha=alpha, nheads=nheads)
     raise ValueError(f"Unknown model_type '{model_type}'. Only 'gat' is supported.")
