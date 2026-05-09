@@ -17,20 +17,32 @@ Paper reference points used in this repo: **Eq. (6)/(7)** for GAT vs GATv2 scori
 
 ```text
 gat-wrecked/
-├── paper/2105.14491v3.pdf
+├── data/
 ├── notebooks/
+│   ├── dataset/
 │   ├── 01_dictionary_lookup.ipynb
 │   ├── 02_structural_noise.ipynb
 │   ├── 03_high_density_ogb.ipynb
 │   ├── 04_varmisuse.ipynb
 │   ├── 05_gat_cora_baseline.ipynb
 │   └── 06_chemical_qm9.ipynb
+├── paper/
+│   └── 2105.14491v3.pdf
+├── poster/
+├── report/
+│   └── group_topic_2page_report.md
+├── results/
+│   └── notebooks__*.png
+├── scripts/
 ├── src/
-│   ├── models.py
+│   ├── __init__.py
 │   ├── data_loaders.py
+│   ├── models.py
 │   ├── train.py
 │   └── utils.py
-└── scripts/
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
 ## 4. Re-implementation Details
