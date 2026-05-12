@@ -30,7 +30,7 @@ gat-wrecked/
 │   └── 2105.14491v3.pdf
 ├── poster/
 ├── report/
-│   └── group_topic_2page_report.md
+│   └── gat_wrecked.pdf
 ├── results/
 │   └── notebooks__*.png
 ├── scripts/
@@ -48,13 +48,13 @@ gat-wrecked/
 ## 4. Re-implementation Details
 
 We use notebook-driven experiments with shared model code in `src/models.py`: dense GAT/GATv2, sparse QM9 variants, and sparse OGB graph-level variants (`OGB_GAT_Model`, `OGB_GATv2_Model`).  
-Datasets include synthetic dictionary/noise setups, Cora, QM9 multi-target regression, OGB graph classification (`ogbg-molhiv`, `ogbg-ppa`), and VarMisuse; metrics follow dataset conventions (e.g., ROC-AUC, Accuracy, MAE).
+Datasets include synthetic dictionary/noise setups, Cora, QM9 multi-target regression, OGB graph classification (`ogbg-molhiv`), and VarMisuse; metrics follow dataset conventions (e.g., ROC-AUC, Accuracy, MAE).
 
 **Experiment map (current repo state):**
 
 - `01_dictionary_lookup.ipynb`: synthetic dictionary lookup unit-test for static vs dynamic attention (paper Figure 1 style behavior).
 - `02_structural_noise.ipynb`: synthetic structural-noise robustness sweeps on generated graph topologies.
-- `03_high_density_ogb.ipynb`: OGB graph classification (`ogbg-molhiv` / `ogbg-ppa`) with val/test metric tracking.
+- `03_high_density_ogb.ipynb`: OGB graph classification (`ogbg-molhiv`) with val/test metric tracking.
 - `04_varmisuse.ipynb`: VarMisuse program-analysis task on graph-structured code data.
 - `05_gat_cora_baseline.ipynb`: Cora baseline comparison for sanity/teaching reference.
 - `06_chemical_qm9.ipynb`: QM9 multi-target regression with target normalization, early stopping, and per-target curves.
@@ -63,7 +63,7 @@ Datasets include synthetic dictionary/noise setups, Cora, QM9 multi-target regre
 
 1. Create environment and install required libs (PyTorch, PyG, OGB, NumPy, Matplotlib).  
 2. Open desired notebook in `notebooks/` and run top-to-bottom (each notebook has its own config block).  
-3. For OGB notebook (`03_high_density_ogb.ipynb`), set `DATASET_NAME` to `ogbg-molhiv` or `ogbg-ppa`; for QM9 (`06_chemical_qm9.ipynb`), set target IDs and model configs.
+3. For OGB notebook (`03_high_density_ogb.ipynb`), set `DATASET_NAME` to `ogbg-molhiv`; for QM9 (`06_chemical_qm9.ipynb`), set target IDs and model configs.
 
 Example setup (local):
 
