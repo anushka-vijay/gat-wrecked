@@ -1,74 +1,98 @@
-***
-
 # GAT vs GATv2: Replication Study
+
 **Paper:** [How Attentive are Graph Attention Networks? (ICLR 2022)](https://arxiv.org/abs/2105.14491)  
 **Team Members:** Allen Vinoy (av642), Aryan Patel (ap2568), Anushka Vijay (asv48), Ram Vaidya (rmv42)
 
-## Overview
-This repository contains the code for our replication study of the paper *How Attentive are Graph Attention Networks?* The original authors demonstrate that standard Graph Attention Networks (GATs) suffer from **"static attention,"** where the ranking of a node's attention scores toward its neighbors is unconditioned on the query node itself. 
+## 1. Introduction
 
-By altering the order of operations in the attention mechanism (applying the non-linearity before the weight matrix), the proposed **GATv2** achieves **"dynamic attention."** 
+This repo is our project re-implementation of Brody et al. (2022), testing when GATv2’s dynamic attention helps over standard GAT across synthetic and real graph tasks.  
+The paper’s core contribution is that standard GAT attention ranking is query-independent (static), while GATv2 changes operation order to support more expressive query-dependent attention.
 
-Our goal is to empirically validate this theoretical claim and demonstrate GATv2's superiority across synthetic, noisy, high-density, and highly inductive real-world datasets.
+## 2. Chosen Result
 
-## The Experiments
-We focus on four key experiments designed to explicitly stress-test the expressiveness of dynamic attention:
+We primarily target the paper’s static-vs-dynamic claim shown in **Figure 1** (dictionary-style attention behavior) and extend comparison to additional benchmarks (QM9, OGB graph property tasks).  
+Paper reference points used in this repo: **Eq. (6)/(7)** for GAT vs GATv2 scoring and benchmark tables for QM9/OGB-style evaluation.
 
-1. **DictionaryLookup (The Theoretical Proof):** A synthetic benchmark acting as a unit test for dynamic attention. We demonstrate that standard GAT completely fails this query-dependent task, while GATv2 succeeds.
-2. **Structural Noise Robustness (`ogbn-arxiv`):** We inject fake edges (up to 100% of the original edge count) to prove GATv2 can dynamically "attend away" from irrelevant, noisy connections better than static baselines.
-3. **High-Density Graph Benchmark (`ogbn-proteins`):** Testing on a dense graph (average node degree of 597) where the ability to dynamically filter hundreds of less relevant neighbors is critical to performance.
-4. **Program Analysis (VARMISUSE):** Predicting misused variables in Abstract Syntax Tree (AST) graphs. This acts as the ultimate inductive stress test, requiring aggressive semantic conditioning.
-
-## Repository Structure
+## 3. GitHub Contents
 
 ```text
-gatv2-replication/
-├── README.md
-├── requirements.txt
-├── notebooks/                  # Colab notebooks (Execution only)
-│   ├── 01_dictionary_lookup.ipynb   
-│   ├── 02_structural_noise.ipynb    
-│   ├── 03_high_density_ogb.ipynb    
-│   └── 04_varmisuse.ipynb           
-├── src/                        # Shared logic (.py files)
+gat-wrecked/
+├── data/
+├── notebooks/
+│   ├── dataset/
+│   ├── 01_dictionary_lookup.ipynb
+│   ├── 02_structural_noise.ipynb
+│   ├── 03_high_density_ogb.ipynb
+│   ├── 04_varmisuse.ipynb
+│   ├── 05_gat_cora_baseline.ipynb
+│   └── 06_chemical_qm9.ipynb
+├── paper/
+│   └── 2105.14491v3.pdf
+├── poster/
+├── report/
+│   └── group_topic_2page_report.md
+├── results/
+│   └── notebooks__*.png
+├── scripts/
+├── src/
 │   ├── __init__.py
-│   ├── models.py               # GAT and GATv2 modules
-│   ├── data_loaders.py         # PyG NeighborLoaders and custom AST parsing
-│   ├── train.py                # Standardized training loops
-│   └── utils.py                # Noise injection and W&B logging
-└── scripts/                    # Automation
-    └── download_varmisuse.sh   # Bash script for fetching JSONlines
+│   ├── data_loaders.py
+│   ├── models.py
+│   ├── train.py
+│   └── utils.py
+├── .gitignore
+├── README.md
+└── requirements.txt
 ```
 
-## Team Collaboration Workflow
-We utilize a distributed execution model. **Do not clone this repository into a mounted Google Drive.** ### 1. Data Storage (Shared Drive)
-All datasets (OGB, VARMISUSE) and saved `.pth` model weights are stored in our shared Google Drive folder: `GATv2_Data/datasets`, `GATv2_Data/model_weights`.
+## 4. Re-implementation Details
 
-### 2. Execution (Google Colab)
-(Need to figure out branches and stuff).
+We use notebook-driven experiments with shared model code in `src/models.py`: dense GAT/GATv2, sparse QM9 variants, and sparse OGB graph-level variants (`OGB_GAT_Model`, `OGB_GATv2_Model`).  
+Datasets include synthetic dictionary/noise setups, Cora, QM9 multi-target regression, OGB graph classification (`ogbg-molhiv`, `ogbg-ppa`), and VarMisuse; metrics follow dataset conventions (e.g., ROC-AUC, Accuracy, MAE).
 
-At the start of your working session in Colab, run the following setup to mount the data and pull the freshest code into temporary storage:
+**Experiment map (current repo state):**
 
-```python
-# 1. Mount the shared data
-from google.colab import drive
-drive.mount('/content/drive')
+- `01_dictionary_lookup.ipynb`: synthetic dictionary lookup unit-test for static vs dynamic attention (paper Figure 1 style behavior).
+- `02_structural_noise.ipynb`: synthetic structural-noise robustness sweeps on generated graph topologies.
+- `03_high_density_ogb.ipynb`: OGB graph classification (`ogbg-molhiv` / `ogbg-ppa`) with val/test metric tracking.
+- `04_varmisuse.ipynb`: VarMisuse program-analysis task on graph-structured code data.
+- `05_gat_cora_baseline.ipynb`: Cora baseline comparison for sanity/teaching reference.
+- `06_chemical_qm9.ipynb`: QM9 multi-target regression with target normalization, early stopping, and per-target curves.
 
-# 2. Clone the code into Colab's fast local storage
-!git clone https://github.com/anushka-vijay/gat-wrecked.git
-%cd gat-wrecked
-!pip install -r requirements.txt
+## 5. Reproduction Steps
 
-# 3. Enable auto-reloading for local module edits
-%load_ext autoreload
-%autoreload 2
+1. Create environment and install required libs (PyTorch, PyG, OGB, NumPy, Matplotlib).  
+2. Open desired notebook in `notebooks/` and run top-to-bottom (each notebook has its own config block).  
+3. For OGB notebook (`03_high_density_ogb.ipynb`), set `DATASET_NAME` to `ogbg-molhiv` or `ogbg-ppa`; for QM9 (`06_chemical_qm9.ipynb`), set target IDs and model configs.
+
+Example setup (local):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install torch torchvision torchaudio
+pip install torch-geometric ogb numpy matplotlib
 ```
 
-### 3. Experiment Tracking (Optional)
-All runs are logged to our team's Weights & Biases (W&B) dashboard. Ensure you authenticate your W&B account before initializing the training loop:
-```python
-import wandb
-wandb.login()
-```
+Compute guidance: CPU runs are possible for small settings, but GPU is strongly recommended for OGB/QM9 full runs.
 
-***
+## 6. Results / Insights
+
+Expected outcome: synthetic dictionary experiments reproduce static-vs-dynamic attention behavior, while real-task gains are dataset- and tuning-dependent (GATv2 is not guaranteed to win on every single run).  
+Current notebooks include per-target and per-epoch visual diagnostics (e.g., QM9 labeled target curves; OGB val/test metric curves) to inspect where gains come from.
+
+## 7. Conclusion
+
+Our re-implementation supports the paper’s main mechanistic claim in controlled settings and provides practical benchmark extensions with custom model variants.  
+A key lesson is that dynamic attention benefits are sensitive to task structure, model capacity, and optimization choices.
+
+## 8. References
+
+1. Brody, S., Alon, U., & Yahav, E. (2022). *How Attentive are Graph Attention Networks?* ICLR. [arXiv:2105.14491](https://arxiv.org/abs/2105.14491)  
+2. OGB benchmark docs and datasets: [https://ogb.stanford.edu](https://ogb.stanford.edu)  
+3. PyTorch Geometric docs: [https://pytorch-geometric.readthedocs.io](https://pytorch-geometric.readthedocs.io)
+
+## 9. Acknowledgements
+
+This project was developed as coursework replication/re-implementation effort and reflects iterative peer collaboration across notebooks and shared model code.  
+We acknowledge the original authors for open-sourcing the core ideas and benchmark framing that made this reproduction possible.
